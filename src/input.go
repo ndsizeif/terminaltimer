@@ -16,62 +16,134 @@ var (
 	setTimer time.Duration
 	setBreak time.Duration
 	setAlert time.Duration
+
+	styleWidth int
+	styleBar   int
+	styleIcon  int
+
+	toggleBar bool
+	toggleBell bool
+	toggleClock bool
+	toggleIcon bool
+	togglePercent bool
+	toggleNotify bool
+	toggleTmux bool
+	toggleRestart bool
+	toggleReverse bool
 )
 
 func ValidateFlags() {
 	args := len(os.Args)
 	programCmd := flag.NewFlagSet(programName, flag.ExitOnError)
 	programCmd.BoolVar(&programHelp, "help", false, UsageString["help"])
-	programCmd.BoolVar(&programHelp, "h", false, UsageString["help"]+" (shorthand)")
+	programCmd.BoolVar(&programHelp, "h", false, UsageString["help"])
+
+	programCmd.Usage = func() {
+		writer := flag.CommandLine.Output()
+		fmt.Fprintf(writer, "%s\n\r", UsageString["programCmd"])
+		f := programCmd.Lookup("help")
+		fmt.Printf("  -%v, -%v\n", Shorthand[f.Name], f.Name)
+		fmt.Printf("\n")
+	}
 
 	taskCmd := flag.NewFlagSet(programName+" task", flag.ExitOnError)
 	taskString := taskCmd.String("task", "", UsageString["task"])
 
 	setCmd := flag.NewFlagSet(programName+" set", flag.ExitOnError)
 	setCmd.DurationVar(&setTimer, "timer", zeroDuration, UsageString["setTimer"])
-	setCmd.DurationVar(&setTimer, "t", zeroDuration, UsageString["setTimer"]+" (shorthand)")
+	setCmd.DurationVar(&setTimer, "t", zeroDuration, UsageString["setTimer"])
 	setCmd.DurationVar(&setBreak, "break", zeroDuration, UsageString["setBreak"])
-	setCmd.DurationVar(&setBreak, "b", zeroDuration, UsageString["setBreak"]+" (shorthand)")
+	setCmd.DurationVar(&setBreak, "b", zeroDuration, UsageString["setBreak"])
 	setCmd.DurationVar(&setAlert, "alert", zeroDuration, UsageString["setAlert"])
-	setCmd.DurationVar(&setAlert, "a", zeroDuration, UsageString["setAlert"]+" (shorthand)")
+	setCmd.DurationVar(&setAlert, "a", zeroDuration, UsageString["setAlert"])
+
+	setCmd.Usage = func() {
+		writer := flag.CommandLine.Output()
+		fmt.Fprintf(writer, "%s\n\r", UsageString["setCmd"])
+		order := []string{"timer", "break", "alert"}
+		for _, name := range order {
+			f := setCmd.Lookup(name)
+			fmt.Printf("  -%v, -%v\n", Shorthand[f.Name], f.Name)
+			fmt.Printf("\t%s\n", f.Usage)
+		}
+		fmt.Printf("\n")
+	}
 
 	styleCmd := flag.NewFlagSet(programName+" style", flag.ExitOnError)
-	styleWidth := styleCmd.Int("width", 0, UsageString["styleWidth"])
-	styleBar := styleCmd.Int("bar", 0, UsageString["styleBar"])
-	styleIcon := styleCmd.Int("icon", 0, UsageString["styleIcon"])
+	styleCmd.IntVar(&styleWidth, "width", 0, UsageString["styleWidth"])
+	styleCmd.IntVar(&styleWidth, "w", 0, UsageString["styleWidth"])
+	styleCmd.IntVar(&styleBar, "bar", 0, UsageString["styleBar"])
+	styleCmd.IntVar(&styleBar, "b", 0, UsageString["styleBar"])
+	styleCmd.IntVar(&styleIcon, "icon", 0, UsageString["styleIcon"])
+	styleCmd.IntVar(&styleIcon, "i", 0, UsageString["styleIcon"])
+
+	styleCmd.Usage = func() {
+		writer := flag.CommandLine.Output()
+		fmt.Fprintf(writer, "%s\n\r", UsageString["styleCmd"])
+		order := []string{"width", "bar", "icon"}
+		for _, name := range order {
+			f := styleCmd.Lookup(name)
+			fmt.Printf("  -%v, -%v\n", Shorthand[f.Name], f.Name)
+			fmt.Printf("\t%s\n", f.Usage)
+		}
+		fmt.Printf("\n")
+	}
 
 	toggleCmd := flag.NewFlagSet(programName+" toggle", flag.ExitOnError)
-	toggleBar := toggleCmd.Bool("bar", false, UsageString["toggleBar"])
-	toggleBell := toggleCmd.Bool("bell", false, UsageString["toggleBell"])
-	toggleClock := toggleCmd.Bool("clock", false, UsageString["toggleClock"])
-	toggleIcon := toggleCmd.Bool("icon", false, UsageString["toggleIcon"])
-	togglePercent := toggleCmd.Bool("percent", false, UsageString["togglePercent"])
-	toggleNotify := toggleCmd.Bool("notify", false, UsageString["toggleNotify"])
-	toggleTmux := toggleCmd.Bool("tmux", false, UsageString["toggleTmux"])
-	toggleRestart := toggleCmd.Bool("restart", false, UsageString["toggleRestart"])
-	toggleReverse := toggleCmd.Bool("reverse", false, UsageString["toggleReverse"])
+	toggleCmd.BoolVar(&toggleBar, "bar", false, UsageString["toggleBar"])
+	toggleCmd.BoolVar(&toggleBar, "b", false, UsageString["toggleBar"])
+	toggleCmd.BoolVar(&toggleBell, "bell", false, UsageString["toggleBell"])
+	toggleCmd.BoolVar(&toggleBell, "l", false, UsageString["toggleBell"])
+	toggleCmd.BoolVar(&toggleClock, "clock", false, UsageString["toggleClock"])
+	toggleCmd.BoolVar(&toggleClock, "c", false, UsageString["toggleClock"])
+	toggleCmd.BoolVar(&toggleIcon, "icon", false, UsageString["toggleIcon"])
+	toggleCmd.BoolVar(&toggleIcon, "i", false, UsageString["toggleIcon"])
+	toggleCmd.BoolVar(&togglePercent, "percent", false, UsageString["togglePercent"])
+	toggleCmd.BoolVar(&togglePercent, "p", false, UsageString["togglePercent"])
+	toggleCmd.BoolVar(&toggleNotify, "notify", false, UsageString["toggleNotify"])
+	toggleCmd.BoolVar(&toggleNotify, "n", false, UsageString["toggleNotify"])
+	toggleCmd.BoolVar(&toggleTmux, "tmux", false, UsageString["toggleTmux"])
+	toggleCmd.BoolVar(&toggleTmux, "t", false, UsageString["toggleTmux"])
+	toggleCmd.BoolVar(&toggleRestart, "restart", false, UsageString["toggleRestart"])
+	toggleCmd.BoolVar(&toggleRestart, "r", false, UsageString["toggleRestart"])
+	toggleCmd.BoolVar(&toggleReverse, "reverse", false, UsageString["toggleReverse"])
+	toggleCmd.BoolVar(&toggleReverse, "v", false, UsageString["toggleReverse"])
 
-	// if program is invoked with one argument, and it is --help
-	if args == 2 {
-		programCmd.Parse(os.Args[1:])
-		if programHelp {
-			PrintUsage()
-			fmt.Println()
-			setCmd.Usage()
-			fmt.Println()
-			styleCmd.Usage()
-			fmt.Println()
-			toggleCmd.Usage()
-			os.Exit(0)
+	toggleCmd.Usage = func() {
+		writer := flag.CommandLine.Output()
+		fmt.Fprintf(writer, "%s\n\r", UsageString["toggleCmd"])
+		order := []string{
+		"bar", "bell", "clock", "icon", "percent", 
+		"notify", "tmux", "restart", "reverse"}
+
+		for _, name := range order {
+			f := toggleCmd.Lookup(name)
+			fmt.Printf("  -%v, -%v\n", Shorthand[f.Name], f.Name)
+			fmt.Printf("\t%s\n", f.Usage)
 		}
+		fmt.Printf("\n")
 	}
+
 	// invoking with program name by itself will render static output and exit
-	if args < 2 {
+	if args == 1 {
 		t, _ := InitializeTimer()
 		t.GetTime()
 		t.Render()
 		os.Exit(0)
 	}
+
+	// if program is invoked with one argument, and it is --help
+	if args == 2 {
+		programCmd.Parse(os.Args[1:])
+		if programHelp {
+			PrintBasicUsage()
+			setCmd.Usage()
+			styleCmd.Usage()
+			toggleCmd.Usage()
+			os.Exit(0)
+		}
+	}
+
 	// check if first argument is a non-flag, and matches one of the listed strings
 	switch os.Args[1] {
 	case "clear":
@@ -90,7 +162,7 @@ func ValidateFlags() {
 		HandleProgramCmd("break")
 	case "run":
 		HandleProgramCmd("run")
-		HandleProgramRun()
+		// HandleProgramRun()
 	case "info":
 		HandleInfo()
 	case "status":
@@ -98,22 +170,19 @@ func ValidateFlags() {
 	case "clean":
 		HandleClean()
 	case "set":
-		HandleSetCmd(setCmd, setTimer, setBreak, setAlert)
+		HandleSetCmd(setCmd, &setTimer, &setBreak, &setAlert)
 	case "style":
-		HandleStyleCmd(styleCmd, styleWidth, styleBar, styleIcon)
+		HandleStyleCmd(styleCmd, &styleWidth, &styleBar, &styleIcon)
 	case "toggle":
-		HandleToggleCmd(toggleCmd, toggleBar, toggleBell, toggleClock, toggleIcon,
-			toggleNotify, togglePercent, toggleRestart, toggleReverse, toggleTmux)
+		HandleToggleCmd(toggleCmd, &toggleBar, &toggleBell, &toggleClock, &toggleIcon,
+			&toggleNotify, &togglePercent, &toggleRestart, &toggleReverse, &toggleTmux)
 	case "help":
-		PrintUsage()
-		fmt.Println()
+		PrintBasicUsage()
 		setCmd.Usage()
-		fmt.Println()
 		styleCmd.Usage()
-		fmt.Println()
 		toggleCmd.Usage()
 	default:
-		PrintUsage()
+		PrintBasicUsage()
 	}
 	os.Exit(0)
 }
@@ -146,12 +215,6 @@ func HandleProgramCmd(command string) {
 	cmd()
 }
 
-func HandleProgramRun() {
-	t, _ := InitializeTimer()
-	cmd := t.ExecuteCommand("run")
-	cmd()
-}
-
 func HandleInfo() {
 	t, _ := InitializeTimer()
 	c := t.Info()
@@ -174,13 +237,13 @@ func HandleClean() {
 }
 
 // handle negative durations being passed
-func ValidateSetCmd(setCmd *flag.FlagSet, timeInterval, breakInterval, alertInterval time.Duration) {
+func ValidateSetCmd(setCmd *flag.FlagSet, timeInterval, breakInterval, alertInterval *time.Duration) {
 	setCmd.Parse(os.Args[2:])
 	if len(os.Args) < 3 {
 		setCmd.Usage()
 		os.Exit(0)
 	}
-	if timeInterval < zeroDuration || breakInterval < zeroDuration || alertInterval < zeroDuration {
+	if *timeInterval < zeroDuration || *breakInterval < zeroDuration || *alertInterval < zeroDuration {
 		setCmd.Usage()
 		os.Exit(0)
 	}
@@ -191,22 +254,22 @@ func ValidateSetCmd(setCmd *flag.FlagSet, timeInterval, breakInterval, alertInte
 		os.Exit(0)
 	}
 }
-func HandleSetCmd(setCmd *flag.FlagSet, timeInterval, breakInterval, alertInterval time.Duration) {
+func HandleSetCmd(setCmd *flag.FlagSet, timeInterval, breakInterval, alertInterval *time.Duration) {
 	setCmd.Parse(os.Args[2:])
 	ValidateSetCmd(setCmd, timeInterval, breakInterval, alertInterval)
 
 	t, _ := InitializeTimer()
-	if timeInterval > zeroDuration {
+	if *timeInterval > zeroDuration {
 		cmd := t.SetDuration("timer")
-		cmd(timeInterval)
+		cmd(*timeInterval)
 	}
-	if breakInterval > zeroDuration {
+	if *breakInterval > zeroDuration {
 		cmd := t.SetDuration("break")
-		cmd(breakInterval)
+		cmd(*breakInterval)
 	}
-	if alertInterval > zeroDuration {
+	if *alertInterval > zeroDuration {
 		cmd := t.SetDuration("alert")
-		cmd(alertInterval)
+		cmd(*alertInterval)
 	}
 	t.State.Save()
 }
@@ -307,6 +370,10 @@ func HandleToggleCmd(toggleCmd *flag.FlagSet, bar, bell, clock, icon, notify, pe
 }
 
 var UsageString = map[string]string{
+	"programCmd":    "Usage of " + programName,
+	"setCmd":        "Usage of " + programName + " set (duration)",
+	"styleCmd":      "Usage of " + programName + " style (int)",
+	"toggleCmd":     "Usage of " + programName + " toggle",
 	"help":          "display full help",
 	"start":         "start timer",
 	"stop":          "stop timer",
@@ -317,6 +384,7 @@ var UsageString = map[string]string{
 	"clean":         "delete timer log file",
 	"clear":         "clear the string for current task",
 	"status":        "return current timer status",
+	"info":          "return current timer interval values",
 	"setTimer":      "set timer interval",
 	"setBreak":      "set break interval",
 	"setAlert":      "set threshold to start alert",
@@ -335,7 +403,24 @@ var UsageString = map[string]string{
 	"toggleTmux":    "turn timer notifications on/off for tmux",
 }
 
-func PrintUsage() {
+var Shorthand = map[string]string {
+	"bar":  "b",
+	"bell": "l",
+	"timer":  "t",
+	"icon": "i",
+	"percent": "p",
+	"notify": "n",
+	"tmux": "t",
+	"restart": "r", 
+	"reverse": "v", 
+	"clock": "c",
+	"alert": "a",
+	"break": "b",
+	"width": "w",
+	"help": "h",
+}
+
+func PrintBasicUsage() {
 	fmt.Printf("Usage of %v:\n", programName)
 	fmt.Printf("  start\n\t%v\n", UsageString["start"])
 	fmt.Printf("  stop\n\t%v\n", UsageString["stop"])
@@ -345,5 +430,8 @@ func PrintUsage() {
 	fmt.Printf("  run\n\t%v\n", UsageString["run"])
 	fmt.Printf("  clean\n\t%v\n", UsageString["clean"])
 	fmt.Printf("  clear\n\t%v\n", UsageString["clear"])
+	fmt.Printf("  status\n\t%v\n", UsageString["status"])
+	fmt.Printf("  info\n\t%v\n", UsageString["info"])
 	fmt.Printf("  help\n\t%v\n", UsageString["help"])
+	fmt.Printf("\n")
 }
