@@ -11,22 +11,29 @@ import (
 var (
 	programName  = "terminalTimer"
 	zeroDuration = time.Duration(0 * time.Minute)
-	programHelp bool
+	programHelp  bool
+
+	setTimer time.Duration
+	setBreak time.Duration
+	setAlert time.Duration
 )
 
 func ValidateFlags() {
 	args := len(os.Args)
 	programCmd := flag.NewFlagSet(programName, flag.ExitOnError)
 	programCmd.BoolVar(&programHelp, "help", false, UsageString["help"])
-	programCmd.BoolVar(&programHelp, "h", false, UsageString["help"] + " (shorthand)")
+	programCmd.BoolVar(&programHelp, "h", false, UsageString["help"]+" (shorthand)")
 
 	taskCmd := flag.NewFlagSet(programName+" task", flag.ExitOnError)
 	taskString := taskCmd.String("task", "", UsageString["task"])
 
 	setCmd := flag.NewFlagSet(programName+" set", flag.ExitOnError)
-	setTimer := setCmd.Duration("timer", zeroDuration, UsageString["setTimer"])
-	setBreak := setCmd.Duration("break", zeroDuration, UsageString["setBreak"])
-	setAlert := setCmd.Duration("alert", zeroDuration, UsageString["setAlert"])
+	setCmd.DurationVar(&setTimer, "timer", zeroDuration, UsageString["setTimer"])
+	setCmd.DurationVar(&setTimer, "t", zeroDuration, UsageString["setTimer"]+" (shorthand)")
+	setCmd.DurationVar(&setBreak, "break", zeroDuration, UsageString["setBreak"])
+	setCmd.DurationVar(&setBreak, "b", zeroDuration, UsageString["setBreak"]+" (shorthand)")
+	setCmd.DurationVar(&setAlert, "alert", zeroDuration, UsageString["setAlert"])
+	setCmd.DurationVar(&setAlert, "a", zeroDuration, UsageString["setAlert"]+" (shorthand)")
 
 	styleCmd := flag.NewFlagSet(programName+" style", flag.ExitOnError)
 	styleWidth := styleCmd.Int("width", 0, UsageString["styleWidth"])
@@ -167,13 +174,13 @@ func HandleClean() {
 }
 
 // handle negative durations being passed
-func ValidateSetCmd(setCmd *flag.FlagSet, timeInterval, breakInterval, alertInterval *time.Duration) {
+func ValidateSetCmd(setCmd *flag.FlagSet, timeInterval, breakInterval, alertInterval time.Duration) {
 	setCmd.Parse(os.Args[2:])
 	if len(os.Args) < 3 {
 		setCmd.Usage()
 		os.Exit(0)
 	}
-	if *timeInterval < zeroDuration || *breakInterval < zeroDuration || *alertInterval < zeroDuration {
+	if timeInterval < zeroDuration || breakInterval < zeroDuration || alertInterval < zeroDuration {
 		setCmd.Usage()
 		os.Exit(0)
 	}
@@ -184,22 +191,22 @@ func ValidateSetCmd(setCmd *flag.FlagSet, timeInterval, breakInterval, alertInte
 		os.Exit(0)
 	}
 }
-func HandleSetCmd(setCmd *flag.FlagSet, timeInterval, breakInterval, alertInterval *time.Duration) {
+func HandleSetCmd(setCmd *flag.FlagSet, timeInterval, breakInterval, alertInterval time.Duration) {
 	setCmd.Parse(os.Args[2:])
 	ValidateSetCmd(setCmd, timeInterval, breakInterval, alertInterval)
 
 	t, _ := InitializeTimer()
-	if *timeInterval > zeroDuration {
+	if timeInterval > zeroDuration {
 		cmd := t.SetDuration("timer")
-		cmd(*timeInterval)
+		cmd(timeInterval)
 	}
-	if *breakInterval > zeroDuration {
+	if breakInterval > zeroDuration {
 		cmd := t.SetDuration("break")
-		cmd(*breakInterval)
+		cmd(breakInterval)
 	}
-	if *alertInterval > zeroDuration {
+	if alertInterval > zeroDuration {
 		cmd := t.SetDuration("alert")
-		cmd(*alertInterval)
+		cmd(alertInterval)
 	}
 	t.State.Save()
 }
