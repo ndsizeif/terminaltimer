@@ -68,47 +68,53 @@ Usage of terminalTimer:
         start break
   run
         display timer inline inside terminal
-  clean
-        delete timer log file
+  task
+        set the string for current task
   clear
         clear the string for current task
+  status
+        return current timer status
+  info
+        return current timer interval values
+  clean
+        delete timer log file
   help
         display full help
 
-Usage of terminalTimer set:
-  -alert duration
-        set threshold to start alert
-  -break duration
-        set break interval
-  -timer duration
+Usage of terminalTimer set (duration)
+  -t, -timer
         set timer interval
+  -b, -break
+        set break interval
+  -a, -alert
+        set threshold to start alert
 
-Usage of terminalTimer style:
-  -bar int
-        style progress bar appearance
-  -icon int
-        style icon appearance
-  -width int
+Usage of terminalTimer style (int)
+  -w, -width
         style progress bar width
+  -b, -bar
+        style progress bar appearance
+  -i, -icon
+        style icon appearance
 
-Usage of terminalTimer toggle:
-  -bar
+Usage of terminalTimer toggle
+  -b, -bar
         turn progress bar on/off
-  -bell
+  -l, -bell
         turn terminal bell on/off
-  -clock
+  -c, -clock
         display time on/off
-  -icon
+  -i, -icon
         display icons on/off
-  -notify
-        turn timer notifications on/off for notify-send
-  -percent
+  -p, -percent
         display interval percentage on/off
-  -restart
+  -r, -restart
         turn automatic timer restart on/off
-  -reverse
+  -v, -reverse
         timer displays time descending/ascending
-  -tmux
+  -n, -notify
+        turn timer notifications on/off for notify-send
+  -t, -tmux
         turn timer notifications on/off for tmux
 ```
 </details>

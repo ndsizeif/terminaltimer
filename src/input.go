@@ -113,8 +113,8 @@ func ValidateFlags() {
 		writer := flag.CommandLine.Output()
 		fmt.Fprintf(writer, "%s\n\r", UsageString["toggleCmd"])
 		order := []string{
-		"bar", "bell", "clock", "icon", "percent", 
-		"notify", "tmux", "restart", "reverse"}
+		"bar", "bell", "clock", "icon", "percent", "restart", "reverse",
+		"notify", "tmux"}
 
 		for _, name := range order {
 			f := toggleCmd.Lookup(name)
@@ -428,10 +428,11 @@ func PrintBasicUsage() {
 	fmt.Printf("  resume\n\t%v\n", UsageString["resume"])
 	fmt.Printf("  break\n\t%v\n", UsageString["break"])
 	fmt.Printf("  run\n\t%v\n", UsageString["run"])
-	fmt.Printf("  clean\n\t%v\n", UsageString["clean"])
+	fmt.Printf("  task\n\t%v\n", UsageString["task"])
 	fmt.Printf("  clear\n\t%v\n", UsageString["clear"])
 	fmt.Printf("  status\n\t%v\n", UsageString["status"])
 	fmt.Printf("  info\n\t%v\n", UsageString["info"])
+	fmt.Printf("  clean\n\t%v\n", UsageString["clean"])
 	fmt.Printf("  help\n\t%v\n", UsageString["help"])
 	fmt.Printf("\n")
 }
