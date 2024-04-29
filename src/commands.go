@@ -68,16 +68,16 @@ func (t *Task) LoadInputMaps() error {
 		"alert": t.State.SetAlert,
 	}
 	t.Toggle = map[string]func(bool){
-		"restart": t.Config.SetRestart,
-		"reverse": t.Config.SetReverse,
-		"bell":    t.Config.SetBell,
-		"clock":   t.Config.SetHideTime,
-		"seconds": t.Config.SetHideSeconds,
-		"bar":     t.Config.SetHideBar,
-		"icon":    t.Config.SetHideIcon,
-		"percent": t.Config.SetPercent,
-		"notify":  t.Config.SetNotify,
-		"tmux":    t.Config.SetNotifyTmux,
+		"restart":  t.Config.SetRestart,
+		"reverse":  t.Config.SetReverse,
+		"bell":     t.Config.SetBell,
+		"clock":    t.Config.SetHideTime,
+		"seconds":  t.Config.SetHideSeconds,
+		"progress": t.Config.SetHideBar,
+		"symbol":   t.Config.SetHideIcon,
+		"percent":  t.Config.SetPercent,
+		"notify":   t.Config.SetNotify,
+		"tmux":     t.Config.SetNotifyTmux,
 	}
 	t.Option = map[string]func(int){
 		"size":   t.Config.SetBarSize,

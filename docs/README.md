@@ -34,9 +34,9 @@ in your `$PATH` or run locally.
 ===============================================================================
  Language            Files        Lines         Code     Comments       Blanks
 ===============================================================================
- Go                     11         1886         1686           64          136
+ Go                     11         1926         1712           57          157
 ===============================================================================
- Total                  11         1886         1686           64          136
+ Total                  11         1926         1712           57          157
 ===============================================================================
 ```
 
@@ -84,7 +84,7 @@ Usage of terminalTimer:
 Usage of terminalTimer set (duration)
   -t, -timer
         set timer interval
-  -b, -break
+  -k, -break
         set break interval
   -a, -alert
         set threshold to start alert
@@ -98,15 +98,15 @@ Usage of terminalTimer style (int)
         style icon appearance
 
 Usage of terminalTimer toggle
-  -b, -bar
+  -p, -progress
         turn progress bar on/off
   -l, -bell
         turn terminal bell on/off
   -c, -clock
         display time on/off
-  -i, -icon
-        display icons on/off
-  -p, -percent
+  -s, -symbol
+        display symbol on/off
+  -P, -percent
         display interval percentage on/off
   -r, -restart
         turn automatic timer restart on/off
@@ -116,6 +116,7 @@ Usage of terminalTimer toggle
         turn timer notifications on/off for notify-send
   -t, -tmux
         turn timer notifications on/off for tmux
+
 ```
 </details>
 

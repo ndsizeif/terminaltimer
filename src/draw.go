@@ -9,24 +9,22 @@ import (
 	"time"
 )
 
-const redrawRate = 1 * time.Second   // inline redraw
-var userInput bool                   // user input string accepted
-
 func (t *Task) RunInline() error {
-	end := make(chan struct{})
-	quitting := make(chan os.Signal, 1)
-	signal.Notify(quitting, os.Interrupt)
-	redraw := time.NewTicker(redrawRate)
-	Stty("-echo") // turn stty echo off while running inline
-	fmt.Printf("%v%v%v", cursorPrevLine, clearLine, cursorHide)
-	t.GetTime()
-	t.Render()
+	var userCmd bool                      // user input command string accepted
+	redrawRate := 1 * time.Second         // inline redraw
+	updateRate := 5 * time.Second         // config update (we don't watch for file changes)
+	redraw := time.NewTicker(redrawRate)  // render current inline timer
+	update := time.NewTicker(updateRate)  // change config/state of inline timer
+	quitting := make(chan os.Signal, 1)   // signal a clean up before exit
+	block := make(chan struct{})          // prevent function from returning
+	input := make(chan int)               // send update (1) or quit (0) message
+	signal.Notify(quitting, os.Interrupt) // handle os kill program
 
-	go func() {
-		for {
-			t.Read()
-		}
-	}()
+	Stty("-echo")                                               // turn stty echo off
+	fmt.Printf("%v%v%v", cursorPrevLine, clearLine, cursorHide) // initial clear & hide
+	t.Render()                                                  // display initial timer
+
+	go t.Read(input)
 
 	go func() {
 		for {
@@ -35,103 +33,85 @@ func (t *Task) RunInline() error {
 				Stty("echo")
 				fmt.Printf("%v%v%v", clearLine, carriageReturn, cursorShow)
 				os.Exit(0)
-				return
-			case <-redraw.C: // render at ticker rate unless user inputs command
-				if userInput {
-					userInput = false
+			case msg := <-input:
+				userCmd = true
+				if msg == 0 {
+					Stty("echo")
+					fmt.Printf("%v%v%v", clearLine, carriageReturn, cursorShow)
+					os.Exit(0)
+				}
+				if msg == 1 {
+					updatedTask, err := InitializeTimer()
+					if err != nil {
+						os.Exit(0)
+					}
+					t = &updatedTask
+				}
+			case <-redraw.C: // render at redraw ticker rate or show user's command input
+				if userCmd {
+					userCmd = false
 					break
 				}
 				fmt.Printf("%v%v", clearLine, carriageReturn)
 				t.GetTime()
 				t.Render()
+			case <-update.C: // get a new State and Config
+				updatedTask, err := InitializeTimer()
+				if err != nil {
+					break
+				}
+				t = &updatedTask
 			}
 		}
 	}()
 
-	<-end // never recieve an end struct, goroutines to run indefintely
+	<-block // never recieve an end struct, goroutines to run indefintely
 	return nil
 }
 
 // receive user input when run inline, perform basic actions based on input
-func (t *Task) Read() {
-	var input string
-	fmt.Scan(&input)
-	if input != "" {
-		// quit for any q* string to cover "quit"
-		if strings.HasPrefix(input, "q") {
-			Stty("echo")
-			fmt.Printf("%v%v%v", clearLine, carriageReturn, cursorShow)
-			os.Exit(0)
-		}
-		if input == "b" || input == "break" {
-			userInput = true
-			fmt.Printf("%v%vtake a break", clearLine, carriageReturn)
-			t.Break()
-			updatedTask, err := InitializeTimer()
-			if err != nil {
-				os.Exit(0)
+func (t *Task) Read(ch chan int) {
+	for {
+		var input string
+		fmt.Scan(&input)
+		if input != "" {
+			if strings.HasPrefix(input, "q") { // quit for any ^q* string
+				ch <- 0
 			}
-			t = &updatedTask // replace Task object, garbage collector should deal with the old object
-			*t = updatedTask
-			return
-		}
-		if input == "t" || input == "stop" {
-			userInput = true
-			fmt.Printf("%v%vstop timer", clearLine, carriageReturn)
-			t.Stop()
-			updatedTask, err := InitializeTimer()
-			if err != nil {
-				os.Exit(0)
+			if input == "b" || input == "break" {
+				fmt.Printf("%v%vtake a break", clearLine, carriageReturn)
+				t.Break()
+				ch <- 1
 			}
-			t = &updatedTask
-			return
-		}
-		if input == "s" || input == "start" {
-			userInput = true
-			fmt.Printf("%v%vstart timer", clearLine, carriageReturn)
-			t.Start()
-			updatedTask, err := InitializeTimer()
-			if err != nil {
-				os.Exit(0)
+			if input == "t" || input == "stop" {
+				fmt.Printf("%v%vstop timer", clearLine, carriageReturn)
+				t.Stop()
+				ch <- 1
 			}
-			t = &updatedTask
-			return
-		}
-		if input == "p" || input == "pause" {
-			userInput = true
-			fmt.Printf("%v%vpause timer", clearLine, carriageReturn)
-			t.Pause()
-			updatedTask, err := InitializeTimer()
-			if err != nil {
-				os.Exit(0)
+			if input == "s" || input == "start" {
+				fmt.Printf("%v%vstart timer", clearLine, carriageReturn)
+				t.Start()
+				ch <- 1
 			}
-			t = &updatedTask
-			return
-		}
-		if input == "r" || input == "resume" {
-			userInput = true
-			fmt.Printf("%v%vresume timer", clearLine, carriageReturn)
-			t.Resume()
-			updatedTask, err := InitializeTimer()
-			if err != nil {
-				os.Exit(0)
+			if input == "p" || input == "pause" {
+				fmt.Printf("%v%vpause timer", clearLine, carriageReturn)
+				t.Pause()
+				ch <- 1
 			}
-			t = &updatedTask
-			return
-		}
-		if input == "c" || input == "clear" { // clear terminal screen, but leave scrollback
-			cmd := exec.Command("clear", "-x")
-			cmd.Stdout = os.Stdout
-			err := cmd.Run()
-			if err != nil {
-				t.Log.Print(err)
-				return
+			if input == "r" || input == "resume" {
+				fmt.Printf("%v%vresume timer", clearLine, carriageReturn)
+				t.Resume()
+				ch <- 1
 			}
-			return
+			if input == "c" || input == "clear" { // clear terminal screen, but leave scrollback
+				cmd := exec.Command("clear", "-x")
+				cmd.Stdout = os.Stdout
+				err := cmd.Run()
+				if err != nil {
+					t.Log.Print(err)
+				}
+			}
 		}
-		// default case, clear line, go back to start previous line, and render timer immediately
-		fmt.Printf("%v%v", clearLine, carriageReturn)
-		t.Render()
 	}
 }
 
@@ -282,6 +262,7 @@ func (t *Task) RingBell() string {
 	if !t.Config.Bell || t.State.TimerIsStopped() || t.State.TimerIsPaused() {
 		return ""
 	}
+	redrawRate := 1 * time.Second
 	// set threshold a few milliseconds greater than the refresh rate to ensure the bell triggers at least once
 	switch {
 	case t.State.TimerOnBreak():

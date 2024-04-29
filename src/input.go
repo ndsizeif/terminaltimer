@@ -21,15 +21,15 @@ var (
 	styleBar   int
 	styleIcon  int
 
-	toggleBar bool
-	toggleBell bool
-	toggleClock bool
-	toggleIcon bool
-	togglePercent bool
-	toggleNotify bool
-	toggleTmux bool
-	toggleRestart bool
-	toggleReverse bool
+	toggleProgress bool
+	toggleBell     bool
+	toggleClock    bool
+	toggleSymbol   bool
+	togglePercent  bool
+	toggleNotify   bool
+	toggleTmux     bool
+	toggleRestart  bool
+	toggleReverse  bool
 )
 
 func ValidateFlags() {
@@ -53,7 +53,7 @@ func ValidateFlags() {
 	setCmd.DurationVar(&setTimer, "timer", zeroDuration, UsageString["setTimer"])
 	setCmd.DurationVar(&setTimer, "t", zeroDuration, UsageString["setTimer"])
 	setCmd.DurationVar(&setBreak, "break", zeroDuration, UsageString["setBreak"])
-	setCmd.DurationVar(&setBreak, "b", zeroDuration, UsageString["setBreak"])
+	setCmd.DurationVar(&setBreak, "k", zeroDuration, UsageString["setBreak"])
 	setCmd.DurationVar(&setAlert, "alert", zeroDuration, UsageString["setAlert"])
 	setCmd.DurationVar(&setAlert, "a", zeroDuration, UsageString["setAlert"])
 
@@ -90,16 +90,16 @@ func ValidateFlags() {
 	}
 
 	toggleCmd := flag.NewFlagSet(programName+" toggle", flag.ExitOnError)
-	toggleCmd.BoolVar(&toggleBar, "bar", false, UsageString["toggleBar"])
-	toggleCmd.BoolVar(&toggleBar, "b", false, UsageString["toggleBar"])
+	toggleCmd.BoolVar(&toggleProgress, "progress", false, UsageString["toggleProgress"])
+	toggleCmd.BoolVar(&toggleProgress, "p", false, UsageString["toggleProgress"])
 	toggleCmd.BoolVar(&toggleBell, "bell", false, UsageString["toggleBell"])
 	toggleCmd.BoolVar(&toggleBell, "l", false, UsageString["toggleBell"])
 	toggleCmd.BoolVar(&toggleClock, "clock", false, UsageString["toggleClock"])
 	toggleCmd.BoolVar(&toggleClock, "c", false, UsageString["toggleClock"])
-	toggleCmd.BoolVar(&toggleIcon, "icon", false, UsageString["toggleIcon"])
-	toggleCmd.BoolVar(&toggleIcon, "i", false, UsageString["toggleIcon"])
+	toggleCmd.BoolVar(&toggleSymbol, "symbol", false, UsageString["toggleSymbol"])
+	toggleCmd.BoolVar(&toggleSymbol, "s", false, UsageString["toggleSymbol"])
 	toggleCmd.BoolVar(&togglePercent, "percent", false, UsageString["togglePercent"])
-	toggleCmd.BoolVar(&togglePercent, "p", false, UsageString["togglePercent"])
+	toggleCmd.BoolVar(&togglePercent, "P", false, UsageString["togglePercent"])
 	toggleCmd.BoolVar(&toggleNotify, "notify", false, UsageString["toggleNotify"])
 	toggleCmd.BoolVar(&toggleNotify, "n", false, UsageString["toggleNotify"])
 	toggleCmd.BoolVar(&toggleTmux, "tmux", false, UsageString["toggleTmux"])
@@ -113,8 +113,8 @@ func ValidateFlags() {
 		writer := flag.CommandLine.Output()
 		fmt.Fprintf(writer, "%s\n\r", UsageString["toggleCmd"])
 		order := []string{
-		"bar", "bell", "clock", "icon", "percent", "restart", "reverse",
-		"notify", "tmux"}
+			"progress", "bell", "clock", "symbol", "percent", "restart", "reverse",
+			"notify", "tmux"}
 
 		for _, name := range order {
 			f := toggleCmd.Lookup(name)
@@ -174,7 +174,7 @@ func ValidateFlags() {
 	case "style":
 		HandleStyleCmd(styleCmd, &styleWidth, &styleBar, &styleIcon)
 	case "toggle":
-		HandleToggleCmd(toggleCmd, &toggleBar, &toggleBell, &toggleClock, &toggleIcon,
+		HandleToggleCmd(toggleCmd, &toggleProgress, &toggleBell, &toggleClock, &toggleSymbol,
 			&toggleNotify, &togglePercent, &toggleRestart, &toggleReverse, &toggleTmux)
 	case "help":
 		PrintBasicUsage()
@@ -314,13 +314,13 @@ func HandleStyleCmd(styleCmd *flag.FlagSet, width, bar, icon *int) {
 	}
 }
 
-func HandleToggleCmd(toggleCmd *flag.FlagSet, bar, bell, clock, icon, notify, percent, restart, reverse, tmux *bool) {
+func HandleToggleCmd(toggleCmd *flag.FlagSet, progress, bell, clock, symbol, notify, percent, restart, reverse, tmux *bool) {
 	toggleCmd.Parse(os.Args[2:])
 	var cmd []func(bool)
 	var config []bool
 	t, _ := InitializeTimer()
-	if *bar {
-		cmd = append(cmd, t.ToggleOption("bar"))
+	if *progress {
+		cmd = append(cmd, t.ToggleOption("progress"))
 		config = append(config, t.Config.HideBar)
 	}
 	if *bell {
@@ -331,8 +331,8 @@ func HandleToggleCmd(toggleCmd *flag.FlagSet, bar, bell, clock, icon, notify, pe
 		cmd = append(cmd, t.ToggleOption("clock"))
 		config = append(config, t.Config.HideTime)
 	}
-	if *icon {
-		cmd = append(cmd, t.ToggleOption("icon"))
+	if *symbol {
+		cmd = append(cmd, t.ToggleOption("symbol"))
 		config = append(config, t.Config.HideIcon)
 	}
 	if *notify {
@@ -370,54 +370,56 @@ func HandleToggleCmd(toggleCmd *flag.FlagSet, bar, bell, clock, icon, notify, pe
 }
 
 var UsageString = map[string]string{
-	"programCmd":    "Usage of " + programName,
-	"setCmd":        "Usage of " + programName + " set (duration)",
-	"styleCmd":      "Usage of " + programName + " style (int)",
-	"toggleCmd":     "Usage of " + programName + " toggle",
-	"help":          "display full help",
-	"start":         "start timer",
-	"stop":          "stop timer",
-	"pause":         "pause timer",
-	"resume":        "start timer if paused",
-	"break":         "start break",
-	"run":           "display timer inline inside terminal",
-	"clean":         "delete timer log file",
-	"clear":         "clear the string for current task",
-	"status":        "return current timer status",
-	"info":          "return current timer interval values",
-	"setTimer":      "set timer interval",
-	"setBreak":      "set break interval",
-	"setAlert":      "set threshold to start alert",
-	"styleWidth":    "style progress bar width",
-	"styleBar":      "style progress bar appearance",
-	"styleIcon":     "style icon appearance",
-	"task":          "set the string for current task",
-	"toggleBar":     "turn progress bar on/off",
-	"toggleBell":    "turn terminal bell on/off",
-	"toggleClock":   "display time on/off",
-	"toggleIcon":    "display icons on/off",
-	"toggleNotify":  "turn timer notifications on/off for notify-send",
-	"togglePercent": "display interval percentage on/off",
-	"toggleRestart": "turn automatic timer restart on/off",
-	"toggleReverse": "timer displays time descending/ascending",
-	"toggleTmux":    "turn timer notifications on/off for tmux",
+	"programCmd":     "Usage of " + programName,
+	"setCmd":         "Usage of " + programName + " set (duration)",
+	"styleCmd":       "Usage of " + programName + " style (int)",
+	"toggleCmd":      "Usage of " + programName + " toggle",
+	"help":           "display full help",
+	"start":          "start timer",
+	"stop":           "stop timer",
+	"pause":          "pause timer",
+	"resume":         "start timer if paused",
+	"break":          "start break",
+	"run":            "display timer inline inside terminal",
+	"clean":          "delete timer log file",
+	"clear":          "clear the string for current task",
+	"status":         "return current timer status",
+	"info":           "return current timer interval values",
+	"setTimer":       "set timer interval",
+	"setBreak":       "set break interval",
+	"setAlert":       "set threshold to start alert",
+	"styleWidth":     "style progress bar width",
+	"styleBar":       "style progress bar appearance",
+	"styleIcon":      "style icon appearance",
+	"task":           "set the string for current task",
+	"toggleProgress": "turn progress bar on/off",
+	"toggleBell":     "turn terminal bell on/off",
+	"toggleClock":    "display time on/off",
+	"toggleSymbol":   "display symbol on/off",
+	"toggleNotify":   "turn timer notifications on/off for notify-send",
+	"togglePercent":  "display interval percentage on/off",
+	"toggleRestart":  "turn automatic timer restart on/off",
+	"toggleReverse":  "timer displays time descending/ascending",
+	"toggleTmux":     "turn timer notifications on/off for tmux",
 }
 
-var Shorthand = map[string]string {
-	"bar":  "b",
-	"bell": "l",
-	"timer":  "t",
-	"icon": "i",
-	"percent": "p",
-	"notify": "n",
-	"tmux": "t",
-	"restart": "r", 
-	"reverse": "v", 
-	"clock": "c",
-	"alert": "a",
-	"break": "b",
-	"width": "w",
-	"help": "h",
+var Shorthand = map[string]string{
+	"bar":      "b",
+	"progress": "p",
+	"bell":     "l",
+	"timer":    "t",
+	"icon":     "i",
+	"symbol":   "s",
+	"percent":  "P",
+	"notify":   "n",
+	"tmux":     "t",
+	"restart":  "r",
+	"reverse":  "v",
+	"clock":    "c",
+	"alert":    "a",
+	"break":    "k",
+	"width":    "w",
+	"help":     "h",
 }
 
 func PrintBasicUsage() {

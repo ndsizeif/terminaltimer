@@ -6,8 +6,6 @@ import (
 	"time"
 )
 
-const notifyThreshold = 1000 * time.Millisecond
-
 // create timer object, load state, config, and adjust timer values based on config
 func InitializeTimer() (Task, error) {
 	var t Task
@@ -211,6 +209,7 @@ func (t *Task) GetState() string {
 }
 
 func (t *Task) NotificationUpdate() {
+	const notifyThreshold = 1000 * time.Millisecond
 	if t.State.TimerIsPaused() { // don't send notifications if paused
 		return
 	}
