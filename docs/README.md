@@ -18,9 +18,11 @@ provides options to output progress in a variety of ways.
 ## Installation
 
 ### Release
-Download and run the latest [release binary](https://github.com/ndsizeif/terminaltimer/releases) for
-your system architecture. Alternatively, build `terminalTimer` for your system from the source
-tarball. Install [Go](https://go.dev/doc/install) if not already present on your system. 
+
+Navigate to the `Releases` section, download and run the latest binary for your
+system architecture. Alternatively, build `terminalTimer` for your system from
+the source tarball. Install [Go](https://go.dev/doc/install) if not already
+present on your system. 
 
 ### Clone
 
@@ -41,13 +43,6 @@ in your `$PATH` or run locally.
 ```
 
 </details>
-
-```
-git clone depth=1 https://github.com/ndsizeif/terminaltimer
-cd src/terminaltimer
-go build
-./terminalTimer
-```
 
 ## Usage
 
