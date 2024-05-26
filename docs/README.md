@@ -186,6 +186,11 @@ will display a notification popup when a timer interval is completed.
 
 ![notifyTmux](./assets/notifyTmux.gif)
 
+**Warning!!** tmux notifications will close the current tmux popup window spawned
+by `tmux display-popup` in order to open a new notification. If working inside a
+volatile popup window is a critical part of your workflow, consider leaving this
+option set to false.
+
 ## Logging
 
 The program can log intervals and tasks that have been completed throughout the day.  The log file
