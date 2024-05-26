@@ -180,7 +180,7 @@ func (t *Task) Info() string {
 }
 
 func (t *Task) GetState() string {
-	var state string
+	var state, notify, restart, task string
 	switch {
 	case t.State.TimerHasExpired():
 		state = stateString["expired"]
@@ -199,13 +199,17 @@ func (t *Task) GetState() string {
 			state = stateString["on"]
 		}
 	}
+	if t.Config.Restart {
+		restart = fmt.Sprintf("%v ",t.Symbols["restart"])
+	}
 	if t.Config.Notify {
-		state = fmt.Sprintf("%v %v", state, t.Symbols["notify"])
+		notify = fmt.Sprintf("%v ",t.Symbols["notify"])
 	}
 	if len(t.State.Task) > 0 {
+		task = t.State.Task + " "
 		state = t.State.Task + " " + state
 	}
-	return state
+	return fmt.Sprintf("%v%v %v%v", task, state, restart, notify)
 }
 
 func (t *Task) NotificationUpdate() {
