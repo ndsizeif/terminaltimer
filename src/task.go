@@ -276,7 +276,14 @@ func (t *Task) SendTmuxNotification(message string) {
 		}
 	}
 	title = fmt.Sprintf(" %v %v %v ", symbol, "Notification", symbol)
-	t.Tmux.Open(title, message)
+	err := t.Tmux.Close() // close any existing tmux popup before spawning a new one
+	if err != nil {
+		t.State.Debug.Print("TMUX CLOSE POPUP:", err)
+	}
+	err = t.Tmux.Open(title, message)
+	if err != nil {
+		t.State.Debug.Print("TMUX OPEN POPUP:", err)
+	}
 	t.State.Debug.Print("TMUX NOTIFICATION:", message)
 }
 
