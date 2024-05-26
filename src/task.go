@@ -207,7 +207,6 @@ func (t *Task) GetState() string {
 	}
 	if len(t.State.Task) > 0 {
 		task = t.State.Task + " "
-		state = t.State.Task + " " + state
 	}
 	return fmt.Sprintf("%v%v %v%v", task, state, restart, notify)
 }

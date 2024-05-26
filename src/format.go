@@ -68,6 +68,7 @@ var icon_solid = map[string]string{
 	"breakp":  "󱅞",
 	"notify":  "󰍩",
 	"tmux":    "",
+	"restart": "󰜉",
 }
 
 // 󰔛 󱫍 󱫗 󰔞 󱫓 󰀪 󰌦 󱫟 󰀓 󱅟 󰍪 
@@ -82,6 +83,7 @@ var icon_trace = map[string]string{
 	"breakp":  "󱅟",
 	"notify":  "󰍪",
 	"tmux":    "",
+	"restart": "󰜉",
 }
 var icon_ascii = map[string]string{
 	"on":      ">",
@@ -94,6 +96,7 @@ var icon_ascii = map[string]string{
 	"breakp":  "+",
 	"notify":  "*",
 	"tmux":    "t",
+	"restart": "r",
 }
 var bar_solid = map[string]string{
 	"done": "█",
